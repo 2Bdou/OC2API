@@ -1,5 +1,5 @@
-const OC_VERSION = "1.17.8";
-const PROXY_VERSION = "9-worker";
+const OC_VERSION = "1.18.26";
+const PROXY_VERSION = "10-worker";
 const OPENCODE_URLs = [
 	"https://opencode.ai.cmliussss.net",
 	"https://opencode.fastly.cmliussss.net",
@@ -281,6 +281,8 @@ async function fetchZenWithFallback(path, createInit, env, requestId, model, str
 					source: baseUrl,
 					message: lastError.message,
 				});
+				// 释放 5xx 响应体，避免未读流占用连接后再发起下一次重试。
+				await response.body?.cancel().catch(() => { });
 				continue;
 			}
 
@@ -418,6 +420,8 @@ async function openAIStreamResponse(upstream, env, requestId, model) {
 
 function normalizeOpenAIFullData(data) {
 	const next = { ...data };
+	// 与流式 normalizer 保持一致：上游会在顶层附带 cost 计费字段，不属于 OpenAI 响应结构，删除。
+	delete next.cost;
 	if (!Array.isArray(next.choices)) return next;
 
 	next.choices = next.choices.map((choice) => {
@@ -1063,6 +1067,8 @@ function isModelUnsupportedError(error) {
 	return text.includes("model_not_found")
 		|| text.includes("unknown model")
 		|| text.includes("unsupported model")
+		|| text.includes("model is unavailable")
+		|| text.includes("model unavailable")
 		|| (text.includes("model") && text.includes("not found"))
 		|| (text.includes("model") && text.includes("not supported"));
 }

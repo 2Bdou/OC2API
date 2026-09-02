@@ -201,7 +201,7 @@ curl "$BASE_URL/health"
 ```json
 {
   "status": "ok",
-  "version": "v9-worker",
+  "version": "v10-worker",
   "models": 0,
   "endpoints": ["/v1/chat/completions", "/v1/messages", "/v1/models"]
 }
